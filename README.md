@@ -136,7 +136,7 @@ Now in package.json change the build script to rollup build script
 ...
 ```
 
-> [!NOTE]
+> :grey_exclamation:
 > Also make sure to move vue from dependencies to devDependencies since we only need vue for testing our plugin in local
 
 
@@ -147,7 +147,7 @@ npm run build
 
 Now you can see the compiled files inside `./dist` directory
 
-> [!TIP]
+> :bulb:
 > To avoid creating a sub directory 'plugin' inside `./dist` directory, update your tsconfig.json file and change all occurance of `src/` to `src/plugin/`
 
 ### Make everything ready to publish your plugin to NPM
@@ -165,7 +165,7 @@ Before publishing, in package.json set **files** to `./dist` so that everything 
 ```
 You can also add your version, description, author, licence, repo ... in your package.json
 
-> [!CAUTION]
+> :warning:
 > Make sure package name mentioned in package.json is unique and remove the line `"private": true` if present
 
 #### Publishing to NPM registry
