@@ -1,16 +1,184 @@
-# Vue 3 + TypeScript + Vite
+# Create your own vue 3 plugin and publish into NPM
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+### First create a vue 3 project using vite
 
-## Recommended IDE Setup
+```sh
+npm create vite@latest test-vite-ts -- --template vue-ts
+```
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+### Install rollup dev dependencies
 
-## Type Support For `.vue` Imports in TS
+```sh
+npm i -D rollup rollup-plugin-vue rollup-plugin-typescript2 rollup-plugin-peer-deps-external rollup-plugin-postcss rollup-plugin-terser
+```
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's Take Over mode by following these steps:
+### Create a plugin
+Create a plugin which creates a component `BlueInput.vue` which will simply shows a input with blue border, create a directory `src/plugin` and make a file `BlueInput.vue` with following code 
 
-1. Run `Extensions: Show Built-in Extensions` from VS Code's command palette, look for `TypeScript and JavaScript Language Features`, then right click and select `Disable (Workspace)`. By default, Take Over mode will enable itself if the default TypeScript extension is disabled.
-2. Reload the VS Code window by running `Developer: Reload Window` from the command palette.
+> ./src/plugin/BlueInput.vue
+```vue
+<script setup lang="ts">
+const props = defineProps<{
+  label?: string
+}>()
+</script>
 
-You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/volar/discussions/471).
+<template>
+    <div v-if="props.label">{{ props.label }}</div>
+    <input class="my-blue-input"/>
+</template>
+
+<style scoped>
+.my-blue-input {
+  border: 1px solid #00f;
+  border-radius: 5px;
+}
+</style>
+```
+
+Now create `index.ts` with code for installing your plugin
+
+> ./src/plugin/index.ts
+```typescript
+import { App } from 'vue'
+import BlueInput from './BlueInput.vue'
+
+export default {
+  install(app: App) {
+    app.component('BlueInput', BlueInput)
+  }
+}
+```
+
+### Test your plugin
+Install your plugin in main.js
+
+> ./src/main.ts
+```typescript
+import { createApp } from 'vue'
+import App from './App.vue'
+import plugin from './plugin'
+
+const app = createApp(App)
+app.use(plugin)
+
+app.mount('#app')
+
+```
+
+Now in `App.vue` try your plugin and check if it is working as expected
+
+> ./src/App.vue
+```vue
+<template>
+  <blue-input label="My Blue Input"/>
+</template>
+```
+
+Now test your plugin by running 
+```sh
+npm run dev
+```
+
+### Setup `rollup.config.js` file
+Create a file at root with following code
+
+> ./rollup.config.js
+```js
+import vue from 'rollup-plugin-vue'
+import typescript from 'rollup-plugin-typescript2';
+import postcss from 'rollup-plugin-postcss';
+import peerDepsExternal from 'rollup-plugin-peer-deps-external'
+import { terser } from 'rollup-plugin-terser'
+
+export default [
+  {
+    input: 'src/plugin/index.ts',
+    output: [
+      {
+        format: 'esm',
+        file: 'dist/index.mjs',
+        plugins: [terser()]
+      },
+      {
+        format: 'cjs',
+        file: 'dist/index.js',
+        plugins: [terser()]
+      }
+    ],
+    plugins: [
+      vue(),
+      typescript({
+        check: false,
+        tsconfigOverride: {
+          compilerOptions: {
+            sourceMap: true,
+            declaration: true,
+            declarationMap: true,
+          }
+        }
+      }),
+      postcss(),
+      peerDepsExternal()
+    ]
+  }
+]
+```
+
+Now in package.json change the build script to rollup build script
+
+> `./package.json`
+```json
+...,
+"scripts": {
+    "build": "rollup -c"
+},
+...
+```
+
+> [!NOTE]
+> Also make sure to move vue from dependencies to devDependencies since we only need vue for testing our plugin in local
+
+
+Now run command
+```sh
+npm run build
+```
+
+Now you can see the compiled files inside `./dist` directory
+
+> [!TIP]
+> To avoid creating a sub directory 'plugin' inside `./dist` directory, update your tsconfig.json file and change all occurance of `src/` to `src/plugin/`
+
+### Make everything ready to publish your plugin to NPM
+Before publishing, in package.json set **files** to `./dist` so that everything other than `./dist` directory is ignored while publishing, also set **main** and **module** to point the js and mjs files created in `./dist` directory
+
+> `./package.json`
+```json
+  ...,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "files": [
+    "dist/*"
+  ],
+  ...
+```
+You can also add your version, description, author, licence, repo ... in your package.json
+
+> [!CAUTION]
+> Make sure package name mentioned in package.json is unique and remove the line `"private": true` if present
+
+#### Publishing to NPM registry
+Run the following command to login into your NPM account
+
+```sh
+npm login
+```
+
+Once you are logged in run this command to publish your plugin
+```npm
+npm publish --access=public
+```
+You can go to your NPM account in browser and checkout the new package you just created and try installing and using it in any other vue projects.
+
+*:heart: HAPPY CODING :heart:*
