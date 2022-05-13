@@ -9,7 +9,7 @@ npm create vite@latest test-vite-ts -- --template vue-ts
 ### Install rollup dev dependencies
 
 ```sh
-npm i -D rollup rollup-plugin-vue rollup-plugin-typescript2 rollup-plugin-peer-deps-external rollup-plugin-postcss rollup-plugin-terser
+npm i -D rollup rollup-plugin-vue rollup-plugin-typescript2 rollup-plugin-peer-deps-external rollup-plugin-postcss rollup-plugin-terser rollup-plugin-delete
 ```
 
 ### Create a plugin
@@ -90,6 +90,7 @@ import typescript from 'rollup-plugin-typescript2';
 import postcss from 'rollup-plugin-postcss';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external'
 import { terser } from 'rollup-plugin-terser'
+import del from 'rollup-plugin-delete'
 
 export default [
   {
@@ -119,7 +120,8 @@ export default [
         }
       }),
       postcss(),
-      peerDepsExternal()
+      peerDepsExternal(),
+      del({ targets: 'dist/*' })
     ]
   }
 ]
